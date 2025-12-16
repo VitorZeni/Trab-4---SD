@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package leilao;
+
+// Serviço Principal (Gateway e Microsserviços internos)
+service SistemaLeilao {
+    rpc CriarLeilao (DadosLeilao) returns (RespostaID) {}
+    rpc ListarLeiloes (Vazio) returns (ListaLeiloes) {}
+    rpc DarLance (Lance) returns (RespostaStatus) {}
+    rpc AcompanharLeiloes (Identificacao) returns (stream Evento) {}
+}
+
+//Serviço do "Banco" Externo
+service BancoExterno {
+    rpc SolicitarPagamento (DadosPagamento)returns (LinkPagamento) {}
+}
+
+//Serviço de Callback (Webhook) que o MS Pagamento vai expor
+service NotificacaoPagamento {
+    rpc ReceberStatus (ResultadoPagamento) returns (Vazio) {}
+}
+
+message Vazio {}
+
+message Identificacao {
+    string client_id = 1;
+}
+
+message DadosLeilao {
+    string descricao = 1;
+    float valor_inicial = 2;
+    string inicio = 3; 
+    string fim = 4;
+}
+
+message RespostaID {
+    string msg = 1;
+    int32 id = 2;
+}
+
+message LeilaoInfo {
+    int32 id = 1;
+    string descricao = 2;
+    float valor_inicial = 3;
+    string status = 4;
+}
+
+message ListaLeiloes {
+    repeated LeilaoInfo leiloes = 1;
+}
+
+message Lance {
+    int32 leilao_id = 1;
+    string user_id = 2;
+    float valor = 3;
+}
+
+message RespostaStatus {
+    string status = 1;
+    string msg = 2;
+}
+
+message Evento {
+    string tipo_evento = 1; 
+    int32 leilao_id = 2;
+    string user_id = 3;     
+    string payload_extra = 4; 
+}
+
+// --- Mensagens de Pagamento ---
+message DadosPagamento {
+    double valor = 1;
+    string cliente = 2;
+    int32 leilao_id = 3;
+}
+
+message LinkPagamento {
+    string transacao_id = 1;
+    string link_pagamento = 2;
+}
+
+message ResultadoPagamento {
+    string transacao_id = 1;
+    string status = 2;
+    int32 leilao_id = 3;
+    string cliente = 4;
+    double valor = 5;
+}
